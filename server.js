@@ -2,10 +2,12 @@ const express = require('express');
 const app = express();
 const mongoogse = require('mongoose');
 const bodyParser = require('body-parser')
+const passport = require('passport')  // Importa o módulo passport
 
 // Body Parser MiddleWare
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
+
 
 // DB config
 const db = require('./config/keys').mongoDBURI;
@@ -14,14 +16,14 @@ const db = require('./config/keys').mongoDBURI;
 mongoogse
   .connect(db)
   .then(() => {
-    console.log("Conectado ao banco de dados");
+    console.log(`Conectado ao MongoDB`);
   })
   .catch(err => { console.log(err) });
 
-app.get('/', (req, res) => {
-  res.send("Servidor Online!");
-
-});
+// MiddleWare do Passport 
+app.use(passport.initialize()) // Inicializa o Passport no servidor "app"
+// chamada ao método, passando como parâmetro a variável pass( referência ao módulo  passport)
+require('./config/passport')(passport)
 
 //APIs routes
 const auth = require('./routes/api/auth');
