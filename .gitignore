@@ -1,3 +1,3 @@
 node_modules/
 package-lock.json
-config/senhas_secrets.txt
+config/senhas_secrets.bat
