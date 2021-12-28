@@ -1,29 +1,20 @@
 const express = require('express');
 const app = express();
-const mongoogse = require('mongoose');
-const bodyParser = require('body-parser')
-const passport = require('passport')  // Importa o módulo passport
+const bodyParser = require('body-parser');
+const passport = require('passport');  // Importa o módulo passport
+const connectDB = require('./config/db');
 
 // Body Parser MiddleWare
-app.use(bodyParser.urlencoded({ extended: false }))
-app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
-
-// DB config
-const db = require('./config/keys').mongoDBURI;
-
-// Connect to MongoDB
-mongoogse
-  .connect(db)
-  .then(() => {
-    console.log(`Conectado ao MongoDB`);
-  })
-  .catch(err => { console.log(err) });
+// Conexão com o banco de dados MongoDB
+connectDB();
 
 // MiddleWare do Passport 
 app.use(passport.initialize()) // Inicializa o Passport no servidor "app"
 // chamada ao método, passando como parâmetro a variável pass( referência ao módulo  passport)
-require('./config/passport')(passport)
+require('./config/passport')(passport);
 
 //APIs routes
 const auth = require('./routes/api/auth');
