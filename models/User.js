@@ -1,8 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-// Create a Schema
-
+// Cria um esquema
 const UserSchema = new Schema({
 
   nome: {
@@ -11,6 +10,7 @@ const UserSchema = new Schema({
   },
   email: {
     type: String,
+    unique: true,
     required: true
   },
   senha: {
