@@ -17,47 +17,56 @@ const validacaoRegistroUsuario = [
 // @route   POST api/users
 // @desc    Rota para registrar usuario
 // @access  Public
-router.post('/',validacaoRegistroUsuario,(req, res) => {
-  const erros = validationResult(req)
-  if(erros.isEmpty()){
-    User.findOne({ email: req.body.email })
-    .then(user => {
+router.post('/', validacaoRegistroUsuario, 
+  async (req, res) => {
+    /** Validação dos dados fornecidos pelo client da API */
 
-      if (user) {
-        return res.status(400).json("Usuário já cadastrado.");  // Resposta HTTP com objeto indicando o erro 
-      } else {
-        // Cria um avatar de acordo com o e-mail passado no body da requisição POST
-        const avatar = gravatar.url(req.body.email, {
-          s: '200', // tamanho
-          r: 'pg', // classificação
-          d: 'mm' // imagem de avatar padrão
+    // Cria objeto com erros gerados pelo validator do ExpressJS
+    const erros = validationResult(req)
+    //Se existir erro, retorna status de erro e o objeto gerado pelo validador do ExpressJS
+    if(!erros.isEmpty()){
+      res.status(400).json({erros:erros.array()})
+    }else{
+      // Destructuring assignment para criar variáveis com os campos do corpo da requisição.
+      const {nome, email,avatar,senha, senha2} = req.body;
+      try{
+        // função assíncrona AWAIT com o usuário consultado no Banco de Dados MongoDB
+        let usuario = await User.findOne({ email: req.body.email })
+        // Testa se o usuário já existe no banco de Dados MongoDB
+        if (usuario) {
+          // Resposta HTTP com objeto indicando o erro. Criado uma resposta JSON seguindo o padrão do validador do ExpressJS
+          return res.status(400).json({erros:[{msg:"Usuário já cadastrado."}]});  
+        } else {
+          // Cria um avatar de acordo com o e-mail passado no body da requisição POST
+          const avatar = gravatar.url(email, {
+            s: '200', // tamanho
+            r: 'pg', // classificação
+            d: 'mm' // imagem de avatar padrão
 
-        })
-
-        // Cria uma instância do Model User
-        const novoUsuario = new User({
-          nome: req.body.nome,
-          email: req.body.email,
-          avatar,
-          senha: req.body.senha
-        });
-        // Criptografa a senha do usuário para salvar no banco de dados
-        bcrypt.genSalt(10, (err, salt) => {  // Cria um "salt" com a senha fornecida
-          bcrypt.hash(novoUsuario.senha, salt, (err, hash) => { // Criptografa o salt gerado com a senha
-            if (err) throw err;
-            novoUsuario.senha = hash;
-            novoUsuario.save()  // Insere o usuário no banco de dados
-              .then(res.status(200).json({msg:"Usuário cadastrado"}))   // Resposta HTTP com o usuário criado no banco de dados MONGODB
-              .catch(err => console.log(err))
           })
-        });
+
+          // Cria uma instância do Model User
+          const novoUsuario = new User({nome,email,avatar,senha});
+
+          // Criptografa a senha do usuário para salvar no banco de dados
+          const salt = await bcrypt.genSalt(10)  // Cria um "salt" com a senha fornecida
+          const hash = await bcrypt.hash(senha, salt) // Criptografa o salt gerado com a senha
+          novoUsuario.senha = hash;
+          await novoUsuario.save()  // Insere o usuário no banco de dados
+          res.status(200).json({msg:"Usuário cadastrado"})  // Resposta HTTP com o usuário criado no banco de dados MONGODB
+            
+        }
+    
+
+      }catch(erro){
+        console.log(erro.message);
+        res.status(500).send("Erro no servidor")
       }
-    })
-    .catch(err => console.log(err))
-  }else{
-    res.status(400).json({erros:erros.array()})
+
+    }
+    
+
   }
-  
-});
+);
 
 module.exports = router;
