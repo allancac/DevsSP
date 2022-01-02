@@ -16,7 +16,7 @@ const validacaoLoginUsuario = [
 // @route   POST api/auth/login
 // @desc    Rota para usuario realizar login / Retornar Token JWT
 // @access  Public
-router.post('/login', validacaoLoginUsuario, async (req, res) => {
+router.post('/', validacaoLoginUsuario, async (req, res) => {
 
   // Cria objeto com erros gerados pelo validator do ExpressJS
   const erros = validationResult(req)
@@ -31,7 +31,7 @@ router.post('/login', validacaoLoginUsuario, async (req, res) => {
     const usuario = await User.findOne({email})
       
     if (!usuario) {
-      return res.status(404).json({erros:[{msg:"Usuário não encontrado."}]});
+      return res.status(404).json({erros:[{msg:"Credenciais inválidas."}]});
     }
 
     // Verificar Senha
@@ -46,7 +46,7 @@ router.post('/login', validacaoLoginUsuario, async (req, res) => {
         res.status(200).json({ msg: 'Usuário encontrado', token: 'Bearer ' + newToken })
       });
     } else {
-      return res.status(401).json({erros:[{msg:"A senha fornecida está incorreta."}]});
+      return res.status(401).json({erros:[{msg:"Credenciais inválidas."}]});
     };
       
       
@@ -57,7 +57,7 @@ router.post('/login', validacaoLoginUsuario, async (req, res) => {
 // @route   GET api/auth/current
 // @desc    Rota protegida pelo passport para exibir usuario atual login
 // @access  Private 
-router.get('/current',passport.authenticate('jwt', { session: false }), (req, res) =>{
+router.get('/',passport.authenticate('jwt', { session: false }), (req, res) =>{
     res.json(req.user)
   }
 );
