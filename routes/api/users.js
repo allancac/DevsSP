@@ -4,12 +4,14 @@ const User = require('../../models/User');  //Carregar o modelo de usuário - Us
 const bcrypt = require('bcryptjs');   //Biblioteca para criptografar a senha do ususário
 const gravatar = require('gravatar'); //Biblioteca para obter imagem do avatar do e-mail fornecido
 const {check, validationResult} = require('express-validator') //Biblioteca do validador nativo do ExpressJS
+const jwt = require('jsonwebtoken')
+const keys = require('../../config/keys')
 
 //  Regras de validação da rota POST api/users
 const validacaoRegistroUsuario = [
-  check('nome', 'Forneça o nome completo do usuário').not().isEmpty(),
-  check('email', 'Forneça um e-mail válido').isEmail(),
-  check('senha', 'Forneça uma senha com 6 ou mais caracteres').isLength({min:6}),
+  check('nome', 'Digite o nome completo do usuário').not().isEmpty(),
+  check('email', 'Digite um e-mail válido').isEmail(),
+  check('senha', 'Digite uma senha com 6 ou mais caracteres').isLength({min:6}),
   check('senha2', 'Confirme a senha').not().isEmpty(),
   check('senha2', 'As senhas não conferem').exists().custom((senha2, { req }) => senha2 === req.body.senha)
 ]
@@ -28,10 +30,10 @@ router.post('/', validacaoRegistroUsuario,
       res.status(400).json({erros:erros.array()})
     }else{
       // Destructuring assignment para criar variáveis com os campos do corpo da requisição.
-      const {nome, email,avatar,senha, senha2} = req.body;
+      const {nome, email, senha} = req.body;
       try{
         // função assíncrona AWAIT com o usuário consultado no Banco de Dados MongoDB
-        let usuario = await User.findOne({ email: req.body.email })
+        let usuario = await User.findOne({ email })
         // Testa se o usuário já existe no banco de Dados MongoDB
         if (usuario) {
           // Resposta HTTP com objeto indicando o erro. Criado uma resposta JSON seguindo o padrão do validador do ExpressJS
@@ -53,7 +55,18 @@ router.post('/', validacaoRegistroUsuario,
           const hash = await bcrypt.hash(senha, salt) // Criptografa o salt gerado com a senha
           novoUsuario.senha = hash;
           await novoUsuario.save()  // Insere o usuário no banco de dados
-          res.status(200).json({msg:"Usuário cadastrado"})  // Resposta HTTP com o usuário criado no banco de dados MONGODB
+
+          const payload = {
+            id: novoUsuario.id,
+            email: novoUsuario.email,
+          };
+
+          // Gerar Token
+          jwt.sign(payload, keys.appSecret, { expiresIn: 3600 }, (err, newToken) => {
+            // Resposta HTTP com o usuário criado no banco de dados MONGODB
+            res.status(200).json({ msg: "Usuário criado com sucesso", token: 'Bearer ' + newToken })  
+            
+          });
             
         }
     
