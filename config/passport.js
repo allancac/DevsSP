@@ -10,15 +10,15 @@ opts.secretOrKey = keys.appSecret;
 
 //exporta uma arrow function que utiliza a estratégia do JWT
 module.exports = (passport) => {
-  passport.use(new JwtStrategy(opts, (payload, done) => {
+  passport.use(new JwtStrategy(opts, async (payload, done) => {
     const idUser = payload.id
-    User.findById(idUser, 'nome email')
-      .then(usuario => {
-        if (usuario) {
-          return done(null, usuario);
-        }
-        return done(null, false);
-      });
+    const usuario = await User.findById(idUser, 'nome email')
+
+    if (usuario) {
+      return done(null, usuario);
+    }
+    return done(null, false);
+    
 
   }))
 }
